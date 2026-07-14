@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>宠物MBTI测试 · 比你更懂TA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "ZCOOL KuaiLe", "Comic Sans MS", "PingFang SC", cursive, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      background-color: #EFEBE0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 0 8px;
+      overflow-x: hidden;
+    }
+    /* 手机竖屏卡片容器 */
+    .app-container {
+      width: 100%;
+      max-width: 400px;
+      height: 95vh;
+      position: relative;
+      overflow: hidden;
+      background: #EFEBE0;
+      border-radius: 28px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1), 0 0 0 2px rgba(0,0,0,0.05);
+      margin: 0 auto;
+    }
+
+    .bg-marquee {
+      position: absolute;
+      top: -10%;
+      left: -50%;
+      width: 200%;
+      height: 120%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.04;
+      transform: rotate(-10deg);
+    }
+    .marquee-line {
+      font-size: 48px;
+      font-weight: 900;
+      white-space: nowrap;
+      animation: scrollText 25s linear infinite;
+      color: #111;
+    }
+    .marquee-line:nth-child(even) {
+      animation-direction: reverse;
+      animation-duration: 30s;
+    }
+    @keyframes scrollText {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .page {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 24px 18px 30px;
+      display: none;
+      flex-direction: column;
+      z-index: 10;
+      overflow-y: auto;
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      padding-bottom: calc(30px + env(safe-area-inset-bottom));
+    }
+    .page.active { display: flex; }
+    @keyframes popIn {
+      0% { opacity: 0; transform: translateY(30px) scale(0.95) rotate(-1deg); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+    }
+
+    .back-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      font-size: 32px;
+      color: #111;
+      cursor: pointer;
+      z-index: 30;
+      opacity: 0.7;
+      line-height: 1;
+      transition: 0.2s;
+    }
+    .back-btn:active { transform: scale(0.8); opacity: 1; }
+
+    .btn-brutal {
+      background: #FF5E3A;
+      color: #fff;
+      font-size: 18px;
+      padding: 14px 24px;
+      border: 3px solid #111;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      box-shadow: 5px 6px 0px #111;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.1s;
+      letter-spacing: 2px;
+      font-weight: bold;
+      display: inline-block;
+      width: 100%;
+    }
+    .btn-brutal:active { transform: translate(5px, 6px); box-shadow: 0px 0px 0px #111; }
+    .btn-brutal.disabled { opacity: 0.5; pointer-events: none; }
+    .btn-brutal-dark { background: #111; color: #FFD02B; }
+
+    /* 首页 */
+    .home-header {
+      text-align: left;
+      margin-top: 24px;
+      position: relative;
+      margin-bottom: 28px;
+    }
+    .spinning-badge {
+      position: absolute;
+      top: -24px;
+      right: 0;
+      width: 70px;
+      height: 70px;
+      background: #FFD02B;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px dashed #111;
+      animation: spin 10s linear infinite;
+      z-index: 1;
+      font-size: 12px;
+      text-align: center;
+      line-height: 1.3;
+      color: #111;
+      font-weight: bold;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .home-main-title {
+      font-size: 40px;
+      line-height: 1.15;
+      color: #111;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 2;
+    }
+    .home-main-title span {
+      color: #FF5E3A;
+      display: inline-block;
+      transform: rotate(-4deg);
+    }
+    .home-subtitle-tag {
+      margin-top: 12px;
+      font-size: 14px;
+      border: 2.5px solid #111;
+      display: inline-block;
+      padding: 5px 14px;
+      background: #fff;
+      transform: rotate(1.5deg);
+      letter-spacing: 1px;
+      box-shadow: 3px 3px 0px #111;
+    }
+
+    .photo-collage {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      margin: 32px 0 24px;
+    }
+    .polaroid-fake {
+      width: 135px;
+      height: 155px;
+      background: #fff;
+      padding: 6px 6px 28px 6px;
+      border: 2.5px solid #111;
+      box-shadow: 4px 5px 0px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .p1 { transform: rotate(-4deg); }
+    .p2 { transform: rotate(6deg); background: #E1EACD; }
+    .polaroid-fake img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .species-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .species-btn {
+      flex: 1;
+      background: #fff;
+      border: 2.5px solid #111;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 16px 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 16px;
+      box-shadow: 4px 5px 0px #111;
+      transition: 0.1s;
+      color: #111;
+    }
+    .species-btn.selected {
+      background: #FFD02B;
+      border-color: #FF5E3A;
+      box-shadow: 4px 5px 0px #FF5E3A;
+    }
+    .species-btn .emoji {
+      font-size: 42px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .home-info-card {
+      background: #fff;
+      border: 2.5px solid #111;
+      border-radius: 20px 8px 20px 8px;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 3px 4px 0px #111;
+      font-size: 11px;
+      margin: 20px 0 12px;
+    }
+    .home-tagline {
+      text-align: center;
+      font-size: 23px;
+      color: #111;
+      letter-spacing: 2px;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+    .home-tagline span { color: #FF5E3A; }
+
+    /* 答题页 */
+    .quiz-header {
+      position: relative;
+      margin-bottom: 28px;
+      padding-top: 16px;
+    }
+    .q-number-big {
+      font-size: 62px;
+      color: #FFD02B;
+      position: absolute;
+      left: -10px;
+      top: -8px;
+      z-index: 0;
+      -webkit-text-stroke: 3px #111;
+    }
+    .q-text {
+      font-size: 22px;
+      color: #111;
+      line-height: 1.5;
+      padding-top: 52px;
+      letter-spacing: 0.5px;
+    }
+    .scattered-options {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .opt-card {
+      padding: 16px 18px;
+      font-size: 16px;
+      border: 2.5px solid #111;
+      cursor: pointer;
+      box-shadow: 4px 5px 0px #111;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: 0.1s;
+    }
+    .opt-letter {
+      font-size: 24px;
+      font-weight: bold;
+      color: #FF5E3A;
+      min-width: 30px;
+    }
+    .opt-card:nth-child(1) { width: 94%; background: #fff; border-radius: 22px 8px 22px 8px; transform: rotate(-1deg); }
+    .opt-card:nth-child(2) { width: 98%; align-self: flex-end; background: #FFD02B; border-radius: 8px 22px 8px 22px; transform: rotate(1.5deg); }
+    .opt-card:nth-child(3) { width: 92%; align-self: center; background: #E1EACD; border-radius: 20px; transform: rotate(-2deg); }
+    .opt-card:nth-child(4) { width: 96%; background: #D5E8F8; border-radius: 15px 30px 15px 30px; transform: rotate(1deg); }
+    .opt-card:active { transform: scale(0.92) rotate(0deg) !important; background: #FF5E3A !important; color: #fff; }
+    .quiz-progress-bar {
+      margin-top: auto;
+      border-top: 2px dashed #aaa;
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+    .progress-track {
+      flex: 1;
+      height: 12px;
+      background: #fff;
+      border: 2px solid #111;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: repeating-linear-gradient(45deg, #FFD02B 0 6px, #FF5E3A 6px 12px);
+      width: 0%;
+      transition: 0.2s;
+    }
+    .trust-text-only {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #777;
+    }
+
+    /* 信息收集页 */
+    .form-title { font-size: 34px; color: #111; line-height: 1.2; margin-bottom: 24px; }
+    .form-title span { color: #FF5E3A; }
+    .form-dossier {
+      border: 3px dashed #111;
+      padding: 24px 16px;
+      border-radius: 20px;
+      margin: 12px 0;
+    }
+    .photo-upload-area {
+      width: 90px;
+      height: 90px;
+      margin: 0 auto 18px;
+      background: #fff;
+      border: 3px dashed #111;
+      border-radius: 30% 70% 30% 70% / 40% 60% 40% 60%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      color: #aaa;
+    }
+    .input-row { margin-bottom: 20px; }
+    .input-label { font-size: 14px; margin-bottom: 6px; color: #111; }
+    .line-input {
+      width: 100%;
+      border: none;
+      border-bottom: 3px solid #111;
+      background: transparent;
+      font-size: 18px;
+      padding: 8px 0;
+      outline: none;
+      color: #FF5E3A;
+    }
+    .pill-group { display: flex; gap: 12px; }
+    .pill {
+      padding: 10px 18px;
+      border: 2.5px solid #111;
+      border-radius: 50px;
+      font-size: 15px;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 2px 2px 0px #111;
+    }
+    .pill.active { background: #111; color: #FFD02B; }
+    .skip-link {
+      text-align: center;
+      margin-top: 14px;
+      color: #888;
+      font-size: 13px;
+    }
+
+    /* 过渡页 */
+    .loading-inner { text-align: center; padding: 60px 10px; }
+    .loading-paw {
+      font-size: 80px;
+      animation: pawBounce 0.6s infinite alternate;
+      display: inline-block;
+    }
+    @keyframes pawBounce {
+      0% { transform: translateY(0) rotate(-5deg); }
+      100% { transform: translateY(-20px) rotate(5deg); }
+    }
+    .loading-text { font-size: 18px; margin-top: 24px; color: #111; }
+
+    /* 报告页 */
+    .page-report {
+      background-color: #fcf8ee;
+      background-image: radial-gradient(#e5dbbe 1.5px, transparent 1.5px),
+        linear-gradient(#e2dabf 1px, transparent 1px),
+        linear-gradient(90deg, #e2dabf 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .report-card { position: relative; padding: 5px; }
+    .sticker-badge {
+      position: absolute;
+      top: -5px;
+      right: 0;
+      font-size: 13px;
+      color: #111;
+      z-index: 10;
+      transform: rotate(4deg);
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+    }
+    .report-top-header { text-align: center; margin: 20px 0 12px; }
+    .report-main-title {
+      font-size: 20px;
+      background: #ffd54f;
+      display: inline-block;
+      padding: 6px 20px;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      border: 2.5px solid #111;
+      box-shadow: 3px 3px 0px #111;
+    }
+    .report-mbti-text {
+      font-size: 32px;
+      color: #111;
+      text-shadow: 2px 2px 0px #ffca28;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .report-avatar-area {
+      position: relative;
+      width: 220px;
+      margin: 24px auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .cloud-mask-box {
+      width: 160px;
+      height: 160px;
+      background: #111;
+      padding: 3px;
+      border-radius: 42% 58% 37% 63% / 55% 40% 60% 45%;
+      box-shadow: 4px 4px 0px #ff9800;
+      transform: rotate(-2deg);
+    }
+    .cloud-mask-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      overflow: hidden;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 70px;
+    }
+    .float-bubble-1 {
+      position: absolute;
+      top: 20px;
+      left: -30px;
+      background: #ff9800;
+      color: #fff;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      border: 2px solid #111;
+      box-shadow: 2px 2px 0px #111;
+      width: 100px;
+      transform: rotate(-6deg);
+      z-index: 5;
+    }
+    .float-bubble-2 {
+      position: absolute;
+      top: 100px;
+      right: -25px;
+      background: #ffca28;
+      color: #111;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 15px 225px 15px 255px/255px 15px 225px 15px;
+      border: 2px solid #111;
+      box-shadow: 2px 2px 0px #111;
+      width: 100px;
+      transform: rotate(4deg);
+      z-index: 5;
+    }
+    .pet-info-card-badge {
+      background: #fff;
+      border: 2.5px solid #111;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 10px 16px;
+      margin-top: 14px;
+      box-shadow: 3px 3px 0px #111;
+      text-align: center;
+      width: 90%;
+    }
+    .golden-quote {
+      background: #fff;
+      border: 2.5px solid #111;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 14px;
+      text-align: center;
+      font-size: 16px;
+      color: #111;
+      box-shadow: 3.5px 3.5px 0px #111;
+      margin: 24px 0;
+      transform: rotate(0.8deg);
+    }
+    .hand-drawn-card {
+      background: #fff;
+      border: 2.5px solid #111;
+      border-radius: 20px 255px 20px 255px/255px 20px 255px 20px;
+      padding: 20px 14px;
+      margin-bottom: 24px;
+      box-shadow: 4px 4px 0px #111;
+      position: relative;
+    }
+    .card-hand-tag {
+      position: absolute;
+      top: -15px;
+      left: 10px;
+      background: #ffca28;
+      padding: 4px 12px;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      border: 2.5px solid #111;
+      box-shadow: 2px 2px 0px #111;
+      font-size: 14px;
+    }
+    .radar-box {
+      width: 100%;
+      height: 180px;
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+    }
+    .tag-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 18px;
+    }
+    .tag-item {
+      font-size: 13px;
+      padding: 6px 12px;
+      border: 2px solid #111;
+      box-shadow: 2px 2px 0px #111;
+    }
+    .t-style-1 { background: #e0f2fe; border-radius: 12px 2px 10px 3px; }
+    .t-style-2 { background: #dcfce7; border-radius: 3px 12px 4px 10px; }
+    .t-style-3 { background: #fef3c7; border-radius: 10px 4px 12px 2px; }
+    .t-style-4 { background: #f3e8ff; border-radius: 2px 10px 3px 12px; }
+    .diag-text {
+      font-size: 14px;
+      color: #334155;
+      line-height: 1.8;
+      margin-top: 8px;
+    }
+    .tip-line {
+      font-size: 14px;
+      color: #334155;
+      line-height: 1.7;
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    .snack-card {
+      background: #fffde7;
+      border: 2.5px solid #111;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 14px;
+      margin: 24px 0;
+      box-shadow: 3.5px 3.5px 0px #111;
+      text-align: center;
+    }
+    .btn-brag-giant {
+      width: 100%;
+      background: #ff5252;
+      color: #fff;
+      font-size: 18px;
+      padding: 14px;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      border: 2.5px solid #111;
+      box-shadow: 4px 4px 0px #111;
+      cursor: pointer;
+      margin-bottom: 24px;
+    }
+    .bottom-bar {
+      margin-top: 12px;
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+    }
+    .fix-btn {
+      flex: 1;
+      padding: 14px;
+      text-align: center;
+      font-size: 16px;
+      border-radius: 30px;
+      border: 2px solid #111;
+      cursor: pointer;
+      box-shadow: 2px 2px 0px #ffca28;
+      background: #111;
+      color: #fff;
+    }
+    .btn-yellow { background: #ffca28; color: #111; }
+    .btn-orange { background: #ff6f43; color: #fff; }
+    .modal-mask {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-box {
+      background: #fdfaf2;
+      border: 3px solid #111;
+      border-radius: 25px;
+      padding: 25px;
+      width: 280px;
+      text-align: center;
+      box-shadow: 8px 8px 0px #111;
+      position: relative;
+    }
+    .qr-code-img {
+      width: 140px;
+      height: 140px;
+      border: 2px solid #111;
+      border-radius: 12px;
+      margin: 15px 0;
+    }
+    .close-modal-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #111;
+      z-index: 5;
+    }
+
+    /* 在手机上的微调 */
+    @media (max-width: 420px) {
+      .app-container {
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      body {
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container" id="appRoot">
+  <div class="bg-marquee" id="bgMarquee">
+    <div class="marquee-line">🐾 WOOF MEOW BARK PURR 🐾</div>
+    <div class="marquee-line">GOOD BOY · GOOD GIRL · CUTE PET</div>
+    <div class="marquee-line">🐾 PET MBTI · PERSONALITY TEST 🐾</div>
+    <div class="marquee-line">🐾 WOOF MEOW BARK PURR 🐾</div>
+    <div class="marquee-line">GOOD BOY · GOOD GIRL · CUTE PET</div>
+    <div class="marquee-line">🐾 PET MBTI · PERSONALITY TEST 🐾</div>
+  </div>
+
+  <!-- 首页 -->
+  <div class="page active" id="pageHome">
+    <div class="home-header">
+      <div class="spinning-badge">SO<br>CUTE!</div>
+      <div class="home-main-title">宠物MBTI<br><span>性格测试</span></div>
+      <div class="home-subtitle-tag">解锁它的隐藏人格</div>
+    </div>
+    <div class="photo-collage">
+      <div class="polaroid-fake p1"><img src="https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&q=90" alt="猫"></div>
+      <div class="polaroid-fake p2"><img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&q=90" alt="狗"></div>
+    </div>
+    <div class="species-row">
+      <div class="species-btn" id="speciesCat" onclick="selectSpecies('cat')"><span class="emoji">🐱</span>喵星人</div>
+      <div class="species-btn" id="speciesDog" onclick="selectSpecies('dog')"><span class="emoji">🐶</span>旺星人</div>
+    </div>
+    <div class="btn-brutal disabled" id="btnStart" onclick="goToQuiz()">🐾 开始测试</div>
+    <div class="home-info-card">已有 <strong>12,340</strong> 位铲屎官测过 ｜ 基于宠物行为学研究</div>
+    <div class="home-tagline">比你更懂<span>"TA"</span>！</div>
+  </div>
+
+  <!-- 答题页 -->
+  <div class="page" id="pageQuiz">
+    <div class="back-btn" onclick="goBack()">←</div>
+    <div class="quiz-header"><div class="q-number-big" id="qNumBadge">01</div><div class="q-text" id="questionText">题目加载中...</div></div>
+    <div class="scattered-options" id="optionsBox"></div>
+    <div class="quiz-progress-bar"><span>PROGRESS</span><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><span id="progressNum">1/16</span></div>
+    <div class="trust-text-only">已有 12,340 位铲屎官测过 ｜ 基于宠物行为学研究</div>
+  </div>
+
+  <!-- 信息收集页 -->
+  <div class="page" id="pageInfo">
+    <div class="back-btn" onclick="goBack()">←</div>
+    <div class="form-title">建立<br><span>专属档案</span> 📝</div>
+    <div class="form-dossier">
+      <div class="photo-upload-area" onclick="alert('模拟上传照片')">📷</div>
+      <div class="input-row"><label class="input-label">TA 的名字</label><input class="line-input" id="inputName" placeholder="比如布丁"></div>
+      <div class="input-row"><label class="input-label">诞生年限</label><input class="line-input" id="inputAge" placeholder="比如3岁2个月"></div>
+      <div class="input-row"><label class="input-label">性别</label><div class="pill-group"><div class="pill active" onclick="togglePill(this)">♂ 男孩</div><div class="pill" onclick="togglePill(this)">♀ 女孩</div></div></div>
+      <div class="input-row"><label class="input-label">品种</label><input class="line-input" id="inputBreed" placeholder="比如英短蓝猫"></div>
+    </div>
+    <div class="btn-brutal btn-brutal-dark" onclick="goToLoading()">⚡ 生成专属报告</div>
+    <div class="skip-link" onclick="goToLoading()">先跳过，直接生成</div>
+  </div>
+
+  <!-- 过渡页 -->
+  <div class="page" id="pageLoading">
+    <div class="loading-inner"><div class="loading-paw">🐾</div><div class="loading-text" id="loadingText">正在分析它的行为模式…</div></div>
+  </div>
+
+  <!-- 报告页 -->
+  <div class="page page-report" id="pageReport">
+    <div class="report-card">
+      <div class="sticker-badge">分享给更多铲屎官 ↗</div>
+      <div class="report-top-header"><div class="report-main-title" id="reportSpeciesTitle">🐱 TA的专属报告</div></div>
+      <div class="report-mbti-text" id="reportMbtiType">「 INTJ 傲娇艺术家 」</div>
+      <div class="report-avatar-area">
+        <div class="float-bubble-1" id="reportBubble1">高冷慢热 💙</div>
+        <div class="cloud-mask-box"><div class="cloud-mask-inner" id="reportAvatar">🐱</div></div>
+        <div class="float-bubble-2" id="reportBubble2">暗中观察 ✨</div>
+        <div class="pet-info-card-badge"><div id="reportPetNameLine">🐾 布丁</div><div id="reportPetMeta">3岁2个月 | 英短蓝猫</div></div>
+      </div>
+      <div class="golden-quote" id="reportQuote">"世界很吵，但它的温柔只给懂它的人"</div>
+      <div class="hand-drawn-card"><div class="card-hand-tag">📊 四维行为雷达图</div><div class="radar-box"><canvas id="reportRadar"></canvas></div><div class="tag-grid" id="reportTags"></div></div>
+      <div class="hand-drawn-card"><div class="card-hand-tag">🔍 性格深度诊断</div><div id="reportDiagnosis"></div></div>
+      <div class="hand-drawn-card"><div class="card-hand-tag" style="background:#a5d6a7;">💡 相处小贴士</div><div id="reportTips"></div></div>
+      <div class="snack-card">🔮 想知道TA的灵魂玩伴是谁吗？</div>
+      <button class="btn-brag-giant" onclick="openQrModal()">【 免费灵魂配对 & 获取配对报告 】</button>
+      <div class="bottom-bar">
+        <div class="fix-btn btn-yellow" onclick="alert('分享功能开发中')">一键分享</div>
+        <div class="fix-btn btn-orange" onclick="alert('海报生成中...')">长按保存海报</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 -->
+  <div class="modal-mask" id="qrModal">
+    <div class="modal-box">
+      <span class="close-modal-btn" onclick="closeQrModal()">×</span>
+      <div>宠TA情感师 已上线</div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PET_MATCH_WX" class="qr-code-img" alt="二维码">
+      <div style="font-size:12px;color:#666;">扫码添加宠TA情感师<br>免费获取灵魂配对报告与好礼</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 全局状态
+  let selectedSpecies = null;
+  let currentQ = 0;
+  let answers = [];
+  let selectedQuestions = [];
+  let pageHistory = [];
+  let reportChart = null;
+  const letters = ['A','B','C','D'];
+
+  // 猫狗完整题库各24题（保持不变）
+  const catFullQuestions = [
+    { q:'家里来了陌生人，你家猫通常会？', opts:['好奇凑过去闻闻','远远观察确认安全','该干嘛干嘛不在意','立刻消失躲安全角落'], dim:0 },
+    { q:'见到其他猫时，它通常？', opts:['主动上前打招呼','远远观察对方反应','发出警告声','完全不理会'], dim:0 },
+    { q:'你试图抱它的时候，它通常？', opts:['主动跳上来求抱抱','勉强接受但很快挣脱','看你一眼然后走开','直接躲开不给机会'], dim:0 },
+    { q:'当它想引起你注意时，会？', opts:['大声喵喵叫','用头蹭你的手或腿','安静坐在你面前盯着你','把桌上的东西推下去'], dim:0 },
+    { q:'你加班晚回家，它会？', opts:['在门口等着迎接你','听到声音才慢慢出现','继续睡不理会','生气不理你一会儿'], dim:0 },
+    { q:'它最喜欢的互动方式是？', opts:['用逗猫棒追逐','安静地被抚摸','自己玩自己的','和你玩捉迷藏'], dim:0 },
+    { q:'窗外飞过一只鸟，它会？', opts:['立刻冲过去进入狩猎模式','盯着看发出咔咔声','看一眼继续晒太阳','完全没兴趣'], dim:1 },
+    { q:'给它剪指甲时，它？', opts:['乖乖配合不动','稍微挣扎但能完成','强烈反抗需要帮手','看到指甲剪就躲起来'], dim:1 },
+    { q:'你用手逗它玩时，它？', opts:['温柔地用爪子拍','假装咬但不用力','真的用力咬','嫌弃地走开'], dim:1 },
+    { q:'当它犯错被骂时，反应是？', opts:['低头装可怜','理直气壮看着你','躲起来不见人','下次还敢'], dim:1 },
+    { q:'早上它是怎么叫醒你的？', opts:['温柔地用头蹭你','坐在胸口盯着你','大声叫直到你起床','它比你还能睡'], dim:1 },
+    { q:'它最喜欢的睡觉位置是？', opts:['你的枕头旁边','沙发正中间','衣柜顶上或角落','每天换地方不固定'], dim:1 },
+    { q:'你拿出它最爱的罐头，它的反应是？', opts:['一秒闪现已就位','优雅坐着用眼神示意','慢悠悠走过来先闻闻','继续睡等会儿再吃'], dim:2 },
+    { q:'给它一个新玩具，它会？', opts:['立刻兴奋地扑上去','先观察一会儿再试探','闻一闻就走开了','对新玩具毫无兴趣'], dim:2 },
+    { q:'家里有快递纸箱时，它会？', opts:['立刻钻进去霸占','闻一闻然后走开','把纸箱当抓板','对纸箱完全没兴趣'], dim:2 },
+    { q:'它喝水的习惯是？', opts:['只喝自己碗里的','喜欢喝流动的水','偷偷喝你杯子里的','对水不太感兴趣'], dim:2 },
+    { q:'窗外有蝴蝶或飞虫时，它会？', opts:['疯狂追扑试图抓住','盯着看但不去追','看一眼继续趴着','完全不感兴趣'], dim:2 },
+    { q:'你拿着零食袋子摇晃时，它会？', opts:['一秒闪现等投喂','坐着期待地看着你','过来闻闻再决定吃不吃','完全不在意'], dim:2 },
+    { q:'你教它简单指令，它？', opts:['很快学会积极回应','学几次能掌握','注意力不集中','完全不理自己玩'], dim:3 },
+    { q:'用严肃语气说"不可以"，它？', opts:['立刻停止并看你','稍作停顿继续干','看你一眼继续','完全无视'], dim:3 },
+    { q:'给它穿衣服或戴项圈时，它？', opts:['乖乖配合不动','勉强接受但想挣脱','挣扎但不攻击','强烈反抗或躲开'], dim:3 },
+    { q:'它吃饭的习惯是？', opts:['定时定量不挑食','偶尔挑食但规律','看心情决定吃不吃','极度挑食需要哄'], dim:3 },
+    { q:'把它从沙发上放下去，它？', opts:['乖乖待在下面','等一会儿再跳上来','立刻又跳上来','跳上来还理直气壮'], dim:3 },
+    { q:'当你想和它拍照时，它？', opts:['配合看镜头','待着不动但不看镜头','走来走去不好拍','看到相机就跑'], dim:3 }
+  ];
+  const dogFullQuestions = [
+    { q:'散步看到其他狗，你家狗会？', opts:['兴奋冲过去交朋友','摇尾巴保持距离','站在原地观察','紧张地躲你身后'], dim:0 },
+    { q:'家里来了快递员，它会？', opts:['冲到门口狂叫','警惕地盯着门','看看门再看看你','继续睡不理会'], dim:0 },
+    { q:'你假装伤心哭泣时，它会？', opts:['立刻过来舔你安慰','把头放在你腿上','困惑地看着你','完全没反应'], dim:0 },
+    { q:'它最喜欢哪种散步路线？', opts:['哪都行只要能出门','去公园找其他狗玩','固定熟悉路线','喜欢探索新路线'], dim:0 },
+    { q:'在陌生环境里，它通常？', opts:['自信探索新地方','跟在你身边很好奇','有点紧张四处嗅闻','害怕不肯往前走'], dim:0 },
+    { q:'家里来客人时，它通常？', opts:['疯狂摇尾巴欢迎每个人','对熟客热情对陌生人观察','待在主人身边观察','躲到另一间房'], dim:0 },
+    { q:'你试图给它洗澡时，它？', opts:['兴奋地跳进水里','勉强接受但表情委屈','试图逃跑','看到水就躲起来'], dim:1 },
+    { q:'遇到雷雨天气，它会？', opts:['完全不害怕','有点紧张靠着你','躲到角落或床底','焦虑地走来走去'], dim:1 },
+    { q:'训练学新指令时，它？', opts:['很快学会积极回应','学几次就能掌握','注意力不集中容易分心','完全不理你自己玩'], dim:1 },
+    { q:'当它累了的时候，会？', opts:['找个舒服地方睡觉','趴在你脚边休息','继续硬撑着玩','变得有点烦躁'], dim:1 },
+    { q:'你穿鞋出门不带它，它？', opts:['兴奋以为要一起出去','挡在门口不让你走','失落地看着你出门','完全没反应'], dim:1 },
+    { q:'坐车的时候它通常？', opts:['兴奋看窗外','安静趴着偶尔看看','有点紧张但能安抚','非常焦虑坐立不安'], dim:1 },
+    { q:'你拿出牵引绳，它的反应？', opts:['疯狂转圈跳起来','兴奋地叫个不停','安静坐着等你系上','慢悠悠走过来'], dim:2 },
+    { q:'给它一个新玩具，它会？', opts:['立刻叼走去玩','闻一闻开始咬','等你扔出去再捡','对新玩具不感兴趣'], dim:2 },
+    { q:'当它想讨零食时，会？', opts:['坐在你面前可怜巴巴看着','用爪子扒拉你','表演所有技能','直接去放零食地方等'], dim:2 },
+    { q:'它和你玩球的方式是？', opts:['叼回来让你继续扔','追到球后自己玩','对球完全不感兴趣','喜欢抢球但不还给你'], dim:2 },
+    { q:'其他宠物靠近食物，它？', opts:['大方分享不介意','有点紧张但能容忍','发出警告声','直接叼走食物换地方'], dim:2 },
+    { q:'它最喜欢被摸哪里？', opts:['肚子','耳朵后面','后背','不太喜欢被摸'], dim:2 },
+    { q:'你教它坐下趴下，它？', opts:['很快学会积极配合','学几次能掌握','需要零食诱导','完全不理自己玩'], dim:3 },
+    { q:'严厉说NO时，它？', opts:['立刻停止乖乖坐下','停顿一下继续','看你一眼然后继续','完全无视继续干'], dim:3 },
+    { q:'让它等着别动，它？', opts:['乖乖待在原地','等几秒就忍不住动','勉强等着但很焦躁','根本不理直接走了'], dim:3 },
+    { q:'遇到松鼠或小鸟，它？', opts:['可以叫回来','会追但能叫停','追了叫不回来','疯狂追拉都拉不住'], dim:3 },
+    { q:'吃饭的习惯是？', opts:['定时定量不挑食','偶尔挑食但规律','看心情决定吃不吃','极度挑食需要哄'], dim:3 },
+    { q:'给它梳毛时，它？', opts:['享受地趴着不动','可以接受但不太喜欢','试图走开','强烈抗拒躲起来'], dim:3 }
+  ];
+
+  // 报告数据（完整16+16）
+  const reportData = {
+    cat: {
+      INTJ:{name:'傲娇艺术家',quote:'世界很吵，但它的温柔只给懂它的人。',diag:['典型的INTJ型，拥有高度独立的内心世界，不依赖外部刺激来获得满足感，而是从自己的节奏和秩序中汲取能量。','社交中展现明显的选择性，对认可的人用细微方式表达依赖。它不是冷漠，而是在用它的方式守护着与你之间的默契。'],tags:['高冷慢热','暗中观察','独立主见','只认一人','聪明不说','边界感强'],tips:['尊重它的独立空间，不要强行抱它或频繁互动。','用慢眨眼代替强行拥抱，缓缓眨眼意味着信任。','它会用自己的方式说爱你，留意那些微小信号。'],radar:[25,80,85,20],b1:'高冷慢热但只认你一人 💙',b2:'暗中观察聪明但不说 ✨'},
+      INTP:{name:'独行思考者',quote:'它的世界里，思考是最有趣的玩具。',diag:['天生的思考者，对世界充满好奇，但更倾向于独自研究和观察。','不擅长热情社交，但会在感兴趣的领域表现出惊人专注力。对主人的爱不喧哗，但会在你安静工作时选择离你最近的位置默默陪伴。'],tags:['好奇宝宝','独自钻研','逻辑鬼才','慢热深情','安静陪伴','脑内小剧场'],tips:['多提供需要动脑的益智玩具，如藏零食的拼图盒。','不要打扰它的研究时间，那是它的快乐时刻。','用规律的生活节奏给它安全感，它喜欢可预测的环境。'],radar:[30,70,90,25],b1:'独自研究脑内小剧场不断 🧠',b2:'安静陪伴最深情的告白 ✨'},
+      INFJ:{name:'温柔领袖',quote:'它治愈了你，而你甚至没有察觉。',diag:['天生的治愈者，对人类的情绪变化有着超乎寻常的感知力。','不追求成为注意力的中心，但总能在关键时刻出现。用润物细无声的方式，成为整个家庭的情感支柱。'],tags:['治愈万物','情感雷达','润物无声','温柔领袖','共情满格','安静力量'],tips:['多和它进行眼神交流，它通过注视来传递情绪。','低落时它格外粘人，那是它在用自己的方式安慰你。','给它安静温暖的环境，它能感知家庭氛围。'],radar:[40,60,60,60],b1:'治愈万物情感雷达 📡',b2:'润物无声安静的力量 💚'},
+      INFP:{name:'梦幻诗人',quote:'它是来自星星的温柔访客。',diag:['温柔的梦想家，对世界有着独特感知，喜欢沉浸在自己的小世界里。','有着丰富的内心世界，可能看起来在发呆，实际上在进行着深度思考。对美好的事物有着天然的向往。'],tags:['温柔梦想家','敏感细腻','内心丰富','治愈陪伴','安静温柔','独特视角'],tips:['给它创造安全舒适的角落，让它有自己的秘密基地。','用温柔的语气和它说话，它能感受到你的情绪。','尊重它偶尔需要独处的时间，那是它在充能。'],radar:[30,85,55,30],b1:'温柔梦想家来自星星 🌟',b2:'敏感细腻内心丰富 💭'},
+      ISTJ:{name:'可靠管家',quote:'它是这个家里最靠谱的成员。',diag:['规则和秩序的维护者，喜欢规律的生活，会在固定时间做固定事情。','有着极强的责任感，会记住每一个日常细节，对家庭作息了如指掌。爱体现在每天的准时守候中。'],tags:['规则守护','准时打卡','沉稳可靠','默默付出','秩序感强','忠诚陪伴'],tips:['保持规律的喂食和生活作息，这会让它感到安全。','它喜欢可预测的环境，尽量少改变家里布局。','它的爱是每天准时在门口等你回家。'],radar:[35,50,40,75],b1:'规则守护准时打卡 📋',b2:'沉稳可靠默默付出 💪'},
+      ISFJ:{name:'温柔守卫',quote:'它用一生守护你的温柔。',diag:['温柔的守护者，不张扬，但总是在你需要时出现。对家庭成员有着深深的忠诚和爱护。','善于记住你的喜好和习惯，会用自己的方式照顾你。可能不会表达，但行动里全是爱。'],tags:['温柔守护','默默关心','贴心陪伴','忠诚不二','细心周到','治愈温暖'],tips:['它会记住你的喜好，用行动表达爱意。','给它温柔的回应，它的付出需要被看见。','不喜欢太大的变化，稳定环境会让它更安心。'],radar:[30,45,50,70],b1:'温柔守护默默关心 💗',b2:'贴心陪伴忠诚不二 🛡️'},
+      ISTP:{name:'独行探险家',quote:'它是独来独往的探险家，自由是它的信仰。',diag:['天生的探险家，热爱自由，喜欢独自探索每个角落。动手能力极强，擅长自己解决问题。','不粘人但也不怕人，有自己的节奏。对新鲜事物充满好奇，但探索完又会回到自己的小世界。'],tags:['自由探险','动手达人','独来独往','冷静观察','独立自主','好奇宝宝'],tips:['给它足够的探索空间，定期更换新玩具或纸箱。','不要强迫互动，让它按自己的节奏接近你。','独立不代表不在乎你，只是表达方式不同。'],radar:[20,65,80,20],b1:'独来独往的探险家 🧭',b2:'自由是它的信仰 🌿'},
+      ISFP:{name:'安静艺术家',quote:'它是用沉默描绘世界的艺术家。',diag:['安静的艺术家，对美有着独特感知，喜欢在舒适的地方安静待着。敏感而温柔，最懂得享受生活。','不追求刺激冒险，更喜欢在阳光最好的角落打盹，或静静看窗外风景。快乐很简单。'],tags:['安静艺术家','享受生活','敏感温柔','低调优雅','岁月静好','温暖陪伴'],tips:['给它准备阳光最好的位置，那是它最喜欢的地方。','用轻柔方式互动，它不喜欢太激烈的游戏。','幸福很简单，一个温暖窝和你的陪伴就足够。'],radar:[25,55,45,30],b1:'安静艺术家享受生活 🎨',b2:'岁月静好温暖陪伴 🌸'},
+      ENTJ:{name:'霸道总裁',quote:'这个家，它说了算。',diag:['天生的领导者，自信果断，对周围环境有强烈掌控欲。总能用自己方式拿到想要的东西。','社交能力极强，目的是管理而非讨好。会用自己方式安排家里一切，霸道背后是责任感。'],tags:['气场全开','天生老大','说一不二','护短第一','效率至上','内心柔软'],tips:['给它明确地位感，先给它喂食打招呼。','不要和它硬碰硬，用零食和耐心引导。','它的管你其实是爱。'],radar:[80,60,70,70],b1:'气场全开说一不二 👑',b2:'护短第一内心柔软 💼'},
+      ENTP:{name:'机智辩论家',quote:'它的鬼点子，比你的头发还多。',diag:['天生的机灵鬼，聪明好动充满创造力，总能找到最意想不到的角落或发明新拆家方式。','喜欢挑战规则，会想出各种方法达到目的。调皮不是恶意，而是对世界永不停歇的好奇心。'],tags:['鬼点子王','好奇过剩','规则破坏者','撒娇求原谅','精力无限','聪明机灵'],tips:['给它足够运动量和脑力消耗，疲惫的它才最乖。','用正向引导代替惩罚。','接受它的话痨属性，那是它在分享发现。'],radar:[75,65,85,25],b1:'鬼点子王好奇过剩 💡',b2:'撒娇求原谅精力无限 ⚡'},
+      ENFJ:{name:'阳光向导',quote:'它是照亮全家的小太阳。',diag:['天生的激励者，热情友善，总用积极态度感染周围每个人和宠物。天生的社交家。','善于照顾其他家庭成员情绪，主动调解纷争，用温暖方式让一切变得更好。'],tags:['温暖小太阳','天生激励者','社交达人','善解人意','积极乐观','治愈全家'],tips:['多带它参加社交活动，它喜欢和其他宠物互动。','情绪受家庭氛围影响，保持愉快气氛很重要。','给它机会照顾其他成员，这会让它有成就感。'],radar:[70,50,60,65],b1:'温暖小太阳照亮全家 ☀️',b2:'社交达人善解人意 🤗'},
+      ESTJ:{name:'铁腕执行者',quote:'它是这个家的秩序管理员。',diag:['天生的管理者，喜欢秩序和规则，会在固定时间提醒你该做的事。家里最可靠的时间表。','执行力极强，一旦形成习惯就不会轻易改变。对自己和周围环境都有较高要求。'],tags:['秩序管理员','执行力强','准时准点','可靠可信','纪律严明','责任感强'],tips:['保持规律日常作息，它需要可预测的时间表。','给它明确指令和边界，它会很乐意遵守。','坚持不是固执，是对家庭秩序的责任感。'],radar:[70,55,55,80],b1:'秩序管理员准时准点 ⏰',b2:'可靠可信纪律严明 📏'},
+      ESTP:{name:'冒险家',quote:'它的冒险精神，让每一天都像探险。',diag:['天生的冒险家，精力充沛行动力强，总是第一个冲到门口要出去。家里最有活力的成员。','反应极快行动敏捷，天生运动员。喜欢身体力行活动，静止太久会不耐烦。'],tags:['冒险精神','精力充沛','行动派','反应敏捷','刺激追求','活力四射'],tips:['给它充足户外活动和运动量，消耗精力是关键。','提供各种互动游戏如追逐接球。','注意安全，它爱冒险但有时忽略危险。'],radar:[85,60,80,30],b1:'冒险精神精力充沛 🏃',b2:'行动派活力四射 ⚡'},
+      ESFP:{name:'派对明星',quote:'有它的地方，就是派对现场。',diag:['天生的表演者，活泼开朗，总用搞笑动作逗乐全家人。享受被关注，家里最闪亮的星。','活在当下，享受每一刻快乐。对人友好热情，看到谁都想打招呼，世界的小甜心。'],tags:['派对明星','搞笑天才','享受当下','热情友好','闪光焦点','快乐传播者'],tips:['多和它互动玩游戏，它喜欢成为注意力中心。','带它见新朋友新环境，社交是快乐源泉。','快乐很简单，一个微笑和夸赞就足够。'],radar:[80,40,70,35],b1:'派对明星搞笑天才 🎉',b2:'享受当下快乐传播者 🌟'},
+      ENFP:{name:'派对明星',quote:'有它的地方，就是派对现场。',diag:['天生的快乐传播者，活泼好动，对世界充满无限热情，总能用各种搞怪行为让家人开怀大笑。','极度社交，享受被关注，善于用夸张肢体语言与人互动。精力过剩时会捣乱，需足够玩耍消耗精力。'],tags:['快乐传播者','社交明星','搞笑担当','精力旺盛','好奇爆棚','暖心粘人'],tips:['每天陪它尽情玩耍，逗猫棒激光笔是好工具。','需要很多关注和互动，多和它说话会开心。','无聊时可能会拆家，提供丰富玩具和攀爬空间。'],radar:[80,35,70,30],b1:'快乐传播者搞笑担当 🎉',b2:'精力旺盛暖心粘人 🌟'},
+      ESFJ:{name:'热情东道主',quote:'它是家里最热情的小管家。',diag:['非常顾家，善于维护家庭和谐，对每个成员关怀备至。喜欢规律生活和温馨家庭氛围。','注重传统和秩序，会在固定时间提醒你喂食清理，最尽职的小管家。喜欢用蹭头表达亲昵。'],tags:['小管家','热情体贴','重视家庭','规律生活','温柔周到','善解人意'],tips:['很在乎你的日常作息，尽量保持规律让它安心。','多回应它的蹭头和呼噜声，那是满意和爱。','很好的家庭陪伴者，让它参与日常活动。'],radar:[65,55,55,70],b1:'热情体贴的小管家 🏠',b2:'重视家庭温柔周到 💝'}
+    },
+    dog: {
+      INTJ:{name:'傲娇艺术家',quote:'世界很吵，但它的忠诚只给懂它的人。',diag:['典型的INTJ型犬，不像其他狗热衷于讨好每个人，有选择地建立深厚关系，在陌生人面前冷静观察。','拥有极强独立解决问题能力。认定的主人很少，一旦认定便是终生忠诚。'],tags:['冷静观察','独立思考','只认一人','暗中守护','慢热深情','聪明沉稳'],tips:['尊重它的判断时间，不要强迫友好。','提供动脑游戏如嗅闻垫益智玩具。','忠诚不喧哗，安静注视就是信任。'],radar:[25,80,85,20],b1:'高冷慢热只认你一人 💙',b2:'暗中观察聪明不说 ✨'},
+      INTP:{name:'独行思考者',quote:'它在自己的小宇宙里自得其乐。',diag:['天生的研究型选手，探索世界不是简单追逐而是深入研究。益智玩具比普通球更让它兴奋。','有自己的逻辑体系，不盲从指令会思考为什么。理解你的意图后会用自己的方式配合。'],tags:['研究选手','独立思考','逻辑清晰','慢热深交','安静专注','脑力达人'],tips:['给它智力挑战玩具满足研究需求。','训练时用逻辑而非强制。','安静不代表不亲近，只是在陪伴。'],radar:[30,70,90,25],b1:'研究选手独立思考 🧠',b2:'慢热深交安静专注 📚'},
+      ENTJ:{name:'霸道总裁',quote:'这个家，它来管理。',diag:['天生的领导者，自信果断，有强烈掌控欲。主动管理其他宠物行为甚至试图管理你。','社交能力极强，目的是管理而非讨好。对家庭成员有强烈保护欲和责任感。'],tags:['天生领袖','气场全开','保护欲强','说一不二','责任担当','内心温柔'],tips:['给它明确地位感和任务。','训练用坚定语气明确手势。','霸道是保护欲体现，给予信任尊重。'],radar:[80,65,75,75],b1:'气场全开保护欲强 👑',b2:'责任担当内心温柔 💼'},
+      ENTP:{name:'机智辩论家',quote:'它的聪明才智，永远用在你意想不到的地方。',diag:['天生的机灵鬼，聪明到会自己开门找零食模仿其他宠物行为。每天在斗智斗勇。','喜欢挑战规则，觉得规则不合理会和你辩论，直到找到双方接受的方案。'],tags:['鬼点子王','规则挑战','聪明过人','好动好奇','幽默有趣','辩论高手'],tips:['提供丰富运动和脑力活动消耗精力。','用正向激励代替惩罚。','接受调皮，这是表达聪明才智的方式。'],radar:[80,70,85,30],b1:'鬼点子王聪明过人 💡',b2:'幽默有趣辩论高手 🎭'},
+      INFJ:{name:'温柔领袖',quote:'它治愈了你，而你甚至没有察觉。',diag:['天生的治愈者，对主人情绪变化有超乎寻常感知力，低落时安静陪伴开心时分享喜悦。','不追求家庭中心，但总在关键时刻出现。润物无声成为全家情感支柱。'],tags:['情感治愈','情绪感知','温柔陪伴','默默关怀','深度共情','安静力量'],tips:['多和它眼神交流感知情绪。','情绪低落时允许靠近。','需要和谐家庭氛围。'],radar:[45,60,60,60],b1:'情感治愈情绪感知 💚',b2:'温柔陪伴默默关怀 🤗'},
+      INFP:{name:'梦幻诗人',quote:'它是用温柔与世界对话的诗人。',diag:['温柔的梦想家，对世界有独特感知，喜欢沉浸在自己小世界里。敏感善良，最懂柔软相处。','有丰富内心世界，看似发呆实则在深度思考。对美好事物有天然向往。'],tags:['温柔梦想家','敏感细腻','内心丰富','治愈陪伴','安静温柔','独特视角'],tips:['创造安全舒适角落作秘密基地。','用温柔语气说话。','尊重独处时间充能。'],radar:[30,85,55,30],b1:'温柔梦想家内心丰富 🌟',b2:'敏感细腻独特视角 💭'},
+      ENFJ:{name:'阳光向导',quote:'它是照亮全家的小太阳。',diag:['天生的激励者，热情友善，总用积极态度感染周围。天生的社交家。','善于照顾其他家庭成员情绪，主动调解纷争，用温暖方式让一切变更好。'],tags:['温暖小太阳','天生激励者','社交达人','善解人意','积极乐观','治愈全家'],tips:['多带它参加社交活动。','保持愉快家庭气氛很重要。','给它机会照顾其他成员。'],radar:[75,50,60,65],b1:'温暖小太阳社交达人 ☀️',b2:'善解人意治愈全家 🤗'},
+      ENFP:{name:'派对明星',quote:'有它的地方，就是派对现场。',diag:['天生的表演者，活泼开朗，总用搞笑动作逗乐家人。享受被关注，家里最闪亮的星。','活在当下享受快乐，对人友好热情，看到谁都打招呼，世界的开心果。'],tags:['派对明星','搞笑天才','享受当下','热情友好','闪光焦点','快乐传播者'],tips:['多和它互动玩游戏。','带它见新朋友新环境。','快乐很简单，微笑夸赞足够。'],radar:[85,40,75,35],b1:'派对明星搞笑天才 🎉',b2:'享受当下快乐传播者 🌟'},
+      ISTJ:{name:'可靠管家',quote:'它是这个家里最靠谱的成员。',diag:['规则和秩序维护者，喜欢规律生活，固定时间做固定事。最值得依赖的成员。','有极强责任感，记住每个日常细节，对家庭作息了如指掌。爱体现在每天准时守候。'],tags:['规则守护','准时打卡','沉稳可靠','默默付出','秩序感强','忠诚陪伴'],tips:['保持规律喂食和生活作息。','喜欢可预测环境少改变布局。','爱是每天准时等你回家。'],radar:[35,50,40,80],b1:'规则守护准时打卡 📋',b2:'沉稳可靠默默付出 💪'},
+      ISFJ:{name:'温柔守卫',quote:'它用一生守护你的温柔。',diag:['温柔的守护者，不张扬但总在需要时出现。对家庭成员深深忠诚爱护，最贴心陪伴。','善于记住你喜好习惯，用自己方式照顾你。可能不表达但行动全是爱。'],tags:['温柔守护','默默关心','贴心陪伴','忠诚不二','细心周到','治愈温暖'],tips:['记住你喜好用行动表达。','给予温柔回应。','不喜欢太大变化需稳定环境。'],radar:[30,45,50,75],b1:'温柔守护默默关心 💗',b2:'贴心陪伴忠诚不二 🛡️'},
+      ESTJ:{name:'铁腕执行者',quote:'它是这个家的秩序管理员。',diag:['天生的管理者，喜欢秩序规则，固定时间提醒你该做的事。最可靠时间表。','执行力极强，习惯不轻易改变。对自己和周围环境有较高要求，最有纪律成员。'],tags:['秩序管理员','执行力强','准时准点','可靠可信','纪律严明','责任感强'],tips:['保持规律日常作息。','给明确指令和边界。','坚持不是固执是责任感。'],radar:[75,55,55,85],b1:'秩序管理员执行力强 ⏰',b2:'可靠可信纪律严明 📏'},
+      ESFJ:{name:'热情东道主',quote:'它是家里最热情的好客主人。',diag:['天生的东道主，热情好客，对每位来访客人热情欢迎。善于照顾他人，家庭聚会最佳助手。','极度关注家庭成员需求，主动维护家庭和谐。喜欢被需要感，乐于为家庭贡献。'],tags:['热情好客','善于照顾','家庭和谐','主动服务','温暖贴心','社交能手'],tips:['给它机会参与家庭活动。','正面鼓励表扬最好奖励。','带它参加家庭聚会。'],radar:[75,45,60,70],b1:'热情好客善于照顾 🏠',b2:'家庭和谐温暖贴心 💝'},
+      ISTP:{name:'独行探险家',quote:'它是独来独往的探险家，自由是它的信仰。',diag:['天生的探险家，热爱自由，喜欢独自探索周围环境。动手能力强擅长解决问题。','不粘人也不怕人，有自己的节奏步调。对新鲜事物好奇探索完回自己小世界。'],tags:['自由探险','动手达人','独来独往','冷静观察','独立自主','好奇宝宝'],tips:['给足够探索空间和户外时间。','不要强迫互动按节奏接近。','独立不代表不在乎表达不同。'],radar:[25,60,85,20],b1:'独来独往探险家 🧭',b2:'自由是它的信仰 🌿'},
+      ISFP:{name:'安静艺术家',quote:'它是用沉默描绘世界的艺术家。',diag:['安静的艺术家，对美有独特感知，喜欢在舒适地方安静待着。敏感温柔最懂享受生活。','不追求刺激冒险，更喜欢在阳光最好角落打盹，或静静看窗外风景。快乐简单。'],tags:['安静艺术家','享受生活','敏感温柔','低调优雅','岁月静好','温暖陪伴'],tips:['准备阳光最好位置。','轻柔方式互动。','幸福很简单温暖窝和陪伴足够。'],radar:[25,50,45,30],b1:'安静艺术家享受生活 🎨',b2:'岁月静好温暖陪伴 🌸'},
+      ESTP:{name:'冒险家',quote:'它的冒险精神，让每一天都像探险。',diag:['天生的冒险家，精力充沛行动力强，总是第一个冲出门。家里最有活力成员。','反应极快行动敏捷天生运动员。喜欢身体力行活动，静止太久不耐烦。'],tags:['冒险精神','精力充沛','行动派','反应敏捷','刺激追求','活力四射'],tips:['充足户外活动和运动量消耗精力。','提供各种互动游戏追逐接球。','注意安全爱冒险忽略危险。'],radar:[85,55,80,30],b1:'冒险精神精力充沛 🏃',b2:'行动派活力四射 ⚡'},
+      ESFP:{name:'派对明星',quote:'有它的地方，就是派对现场。',diag:['天生的表演者，活泼开朗，总用搞笑动作逗乐家人。享受被关注，家里最闪亮星。','活在当下享受每刻快乐，对人友好热情，世界的小甜心。'],tags:['派对明星','搞笑天才','享受当下','热情友好','闪光焦点','快乐传播者'],tips:['多和它互动玩游戏。','带它见新朋友新环境。','快乐很简单微笑夸赞足够。'],radar:[85,40,75,35],b1:'派对明星搞笑天才 🎉',b2:'享受当下快乐传播者 🌟'}
+    }
+  };
+
+  // 核心逻辑函数
+  function selectSpecies(t) {
+    selectedSpecies = t;
+    document.getElementById('speciesCat').classList.toggle('selected', t==='cat');
+    document.getElementById('speciesDog').classList.toggle('selected', t==='dog');
+    document.getElementById('btnStart').classList.remove('disabled');
+  }
+  function shuffle(a) { for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  function pickQuestions(pool) { const dims=[[],[],[],[]]; pool.forEach(q=>dims[q.dim].push(q)); let picked=[]; dims.forEach(d=>picked=picked.concat(shuffle(d).slice(0,4))); return shuffle(picked); }
+  function goToQuiz() { if(!selectedSpecies) return; pageHistory.push('pageHome'); selectedQuestions = pickQuestions(selectedSpecies==='cat'?catFullQuestions:dogFullQuestions); currentQ=0; answers=[]; switchPage('pageQuiz'); loadQuestion(); }
+  function loadQuestion() {
+    if(currentQ>=selectedQuestions.length) { pageHistory.push('pageQuiz'); switchPage('pageInfo'); return; }
+    document.getElementById('qNumBadge').textContent = String(currentQ+1).padStart(2,'0');
+    document.getElementById('questionText').textContent = selectedQuestions[currentQ].q;
+    document.getElementById('optionsBox').innerHTML = selectedQuestions[currentQ].opts.map((o,i)=>`<div class="opt-card" onclick="handleSelect(${i})"><span class="opt-letter">${letters[i]}.</span>${o}</div>`).join('');
+    const pct = ((currentQ)/selectedQuestions.length)*100;
+    document.getElementById('progressFill').style.width = pct+'%';
+    document.getElementById('progressNum').textContent = (currentQ)+'/'+selectedQuestions.length;
+  }
+  function handleSelect(idx) { answers.push(idx); currentQ++; setTimeout(loadQuestion, 120); }
+  function togglePill(el) { el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); el.classList.add('active'); }
+  function goToLoading() { pageHistory.push('pageInfo'); switchPage('pageLoading'); const texts = ['正在分析行为模式…','提取性格关键词…','发现隐藏魅力…','马上揭晓…']; let i=0; document.getElementById('loadingText').textContent=texts[0]; const timer = setInterval(()=>{ i=(i+1)%texts.length; document.getElementById('loadingText').textContent=texts[i]; }, 1800); setTimeout(()=>{ clearInterval(timer); renderReport(); }, 2800); }
+  function renderReport() {
+    const name = document.getElementById('inputName').value.trim() || (selectedSpecies==='cat'?'布丁':'旺财');
+    const age = document.getElementById('inputAge').value.trim() || '3岁2个月';
+    const breed = document.getElementById('inputBreed').value.trim() || (selectedSpecies==='cat'?'英短蓝猫':'柴犬');
+    const genderEl = document.querySelector('#pageInfo .pill.active');
+    const gender = genderEl ? genderEl.textContent.trim() : '♀ 女孩';
+    const speciesLabel = selectedSpecies==='cat'?'喵星人':'旺星人';
+    const speciesEmoji = selectedSpecies==='cat'?'🐱':'🐶';
+    const genderEmoji = gender.includes('男孩')?'♂':'♀';
+    let scores=[0,0,0,0];
+    for(let i=0;i<selectedQuestions.length;i++) scores[selectedQuestions[i].dim] += (4-answers[i]);
+    const M = scores[0]>=10?'E':'I', B = scores[1]>=10?'N':'B', T = scores[2]>=10?'T':'F', J = scores[3]>=10?'J':'P';
+    const reportType = M+(B==='N'?'S':'N')+T+J;
+    const data = reportData[selectedSpecies];
+    let report = data[reportType];
+    if(!report) report = data[Object.keys(data)[0]];
+    document.getElementById('reportSpeciesTitle').textContent = speciesEmoji+' TA的专属报告';
+    document.getElementById('reportMbtiType').textContent = `「 ${reportType} ${report.name} 」`;
+    document.getElementById('reportBubble1').textContent = report.b1;
+    document.getElementById('reportBubble2').textContent = report.b2;
+    document.getElementById('reportAvatar').textContent = speciesEmoji;
+    document.getElementById('reportPetNameLine').innerHTML = `🐾 ${name} <span style="font-size:12px;background:#ff5252;color:#fff;padding:2px 8px;border-radius:10px;">${speciesLabel} ${genderEmoji}</span>`;
+    document.getElementById('reportPetMeta').innerHTML = `<span>${age}</span><span>|</span><span>${breed}</span>`;
+    document.getElementById('reportQuote').textContent = `"${report.quote}"`;
+    document.getElementById('reportDiagnosis').innerHTML = report.diag.map(p=>`<p class="diag-text">${p}</p>`).join('');
+    const ts=['t-style-1','t-style-2','t-style-3','t-style-4','t-style-1','t-style-2'];
+    document.getElementById('reportTags').innerHTML = report.tags.map((t,i)=>`<span class="tag-item ${ts[i]}">🏷️ ${t}</span>`).join('');
+    document.getElementById('reportTips').innerHTML = report.tips.map((t,i)=>`<div class="tip-line"><span>${i+1}.</span> ${t}</div>`).join('');
+    document.getElementById('appRoot').style.background = '#fcf8ee';
+    document.getElementById('appRoot').style.backgroundImage = 'radial-gradient(#e5dbbe 1.5px, transparent 1.5px), linear-gradient(#e2dabf 1px, transparent 1px), linear-gradient(90deg, #e2dabf 1px, transparent 1px)';
+    document.getElementById('bgMarquee').style.display = 'none';
+    switchPage('pageReport');
+    setTimeout(()=>{ renderRadar(report.radar); }, 200);
+  }
+  function renderRadar(data) {
+    const ctx = document.getElementById('reportRadar').getContext('2d');
+    if(reportChart) reportChart.destroy();
+    reportChart = new Chart(ctx, { type:'radar', data:{ labels:['社交能量','情绪稳定','驱动力','服从学习'], datasets:[{ data, backgroundColor:'rgba(255,111,67,0.25)', borderColor:'#ff6f43', borderWidth:3, pointBackgroundColor:'#111' }] }, options:{ scales:{ r:{ grid:{color:'#d7ccc8'}, pointLabels:{font:{size:12}}, ticks:{display:false, max:100} } }, plugins:{legend:{display:false}} } });
+  }
+  function openQrModal() { document.getElementById('qrModal').style.display='flex'; }
+  function closeQrModal() { document.getElementById('qrModal').style.display='none'; }
+  function goBack() {
+    const cp = document.querySelector('.page.active').id;
+    if(cp==='pageQuiz' && currentQ>0) { currentQ--; answers.pop(); loadQuestion(); }
+    else if(cp==='pageReport' || cp==='pageLoading') {
+      document.getElementById('appRoot').style.background = '#EFEBE0';
+      document.getElementById('appRoot').style.backgroundImage = '';
+      document.getElementById('bgMarquee').style.display = '';
+      switchPage(pageHistory.length>0 ? pageHistory.pop() : 'pageHome');
+    } else { switchPage(pageHistory.length>0 ? pageHistory.pop() : 'pageHome'); }
+  }
+  function switchPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+</script>
+</body>
+</html>
